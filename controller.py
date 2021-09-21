@@ -71,4 +71,4 @@ if __name__ == '__main__':
     # dbase = shelve.open("mydbase")
     # dbase['anchorList'] = ['腐团儿', 'Minana呀', '苏恩Olivia', 'Chance喵',  '张琪格', 'Sun佐伊',  '小a懿', '秀秀呢']
     # dbase.close()
-    app.run(host='127.0.0.1', port=18888)
+    app.run(host='192.168.31.40', port=18888)

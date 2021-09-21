@@ -75,6 +75,8 @@ def get_next_num_link(link):
 def downloadVideo(name, url):
     count = 0
     connectTryCount = 0
+    last_work_time = time.time()
+    
     is_dispersed = get_is_dispersed(url)
     if is_dispersed:
         print('current index is:%s'%(get_dispersed_index(url)))
@@ -83,6 +85,9 @@ def downloadVideo(name, url):
     fileName = analysisFileName(name)
     headers = {'user-agent': 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.98 Safari/537.36 LBBROWSER'}
     while(True):
+        if connectTryCount > maxConnectTry:
+            print('reach maxmium times of try, exit')
+            break
         try:
             r = requests.get(url, stream=True, timeout=1, headers=headers, verify=False)
         except OSError as e:
@@ -90,11 +95,14 @@ def downloadVideo(name, url):
             print('link break wait to connect, %dth try...' % (connectTryCount))
             time.sleep(1)
             connectTryCount = connectTryCount + 1
-            if connectTryCount > maxConnectTry:
-                print('reach maxmium times of try, exit')
-                break
             continue
-        connectTryCount = 0
+        if time.time() - last_work_time < 2:
+            time.sleep(10)
+            print('too fast, stop download!')
+            continue
+        else:
+            last_work_time = time.time()
+            
         count = 0
         fileName = getNextFileName(fileName)
         print('start download to ', fileName)
@@ -111,12 +119,15 @@ def downloadVideo(name, url):
                 time.sleep(3)
                 continue
         if os.path.exists(fileName) and get_FileSize(fileName) < 800:
+            connectTryCount = connectTryCount + 1
             print('file:%s too small(%dKB), delete!'%(fileName, get_FileSize(fileName)))
             try:
                 os.remove(fileName)
             except IOError as e:
                 print(e)
                 continue
+        else:
+            connectTryCount = 0
     print('complete')
 
 if __name__=="__main__":
