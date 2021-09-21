@@ -87,7 +87,7 @@ def downloadVideo(name, url):
             r = requests.get(url, stream=True, timeout=1, headers=headers, verify=False)
         except OSError as e:
             print(e)
-            print(f'link break wait to connect, {connectTryCount}th try...')
+            print('link break wait to connect, %dth try...' % (connectTryCount))
             time.sleep(1)
             connectTryCount = connectTryCount + 1
             if connectTryCount > maxConnectTry:

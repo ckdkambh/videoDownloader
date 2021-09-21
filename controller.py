@@ -67,15 +67,6 @@ def deleteProcess():
         del g_process_list[name]
     return ""
 
-def testDown(name, url):
-    count = 0
-    while True:
-        time.sleep(1)
-        print(f'downing {name}, in {url}')
-
-def getProcessInfo():
-    pass
-
 if __name__ == '__main__':
     # dbase = shelve.open("mydbase")
     # dbase['anchorList'] = ['腐团儿', 'Minana呀', '苏恩Olivia', 'Chance喵',  '张琪格', 'Sun佐伊',  '小a懿', '秀秀呢']
