@@ -2,7 +2,7 @@ from flask import Flask,request
 from flask import render_template
 import shelve
 import time
-from multiprocessing import Process, Manager
+from multiprocessing import Process, Queue
 import json
 from downloadstreamvideo import downloadVideo
 
@@ -44,18 +44,35 @@ def download():
     name = request.form['name']
     videoUrl = request.form['videoUrl']
     if name not in g_process_list:
-        p = Process(target=downloadVideo, args=(name, videoUrl))
+        q = Queue(1)
+        p = Process(target=downloadVideo, args=(name, videoUrl, q))
         p.start()
-        g_process_list[name] = p
+        g_process_list[name] = [p, q]
     return ""
 
 @app.route('/watch', methods=["GET"])
 def watch():
     result = []
     for k, v in g_process_list.items():
-        print(k)
-        print(v.is_alive())
-        result.append({ "name" : k, "state" : v.is_alive()})
+        try:
+            info = v[1].get_nowait()
+            result.append({
+                "name" : k,
+                "state" : v[0].is_alive(),
+                "totalSize" : info["totalSize"] if "totalSize" in info else 0,
+                "totalFileNum" : info["totalFileNum"] if "totalFileNum" in info else 0,
+                "currentSize" : info["currentSize"] if "currentSize" in info else 0})
+        except:
+            result.append({
+                "name" : k,
+                "state" : v[0].is_alive(),
+                "totalSize" : 0,
+                "totalFileNum" : 0,
+                "currentSize" : 0})
+        try:
+            v[1].put_nowait(info)
+        except:
+            pass
     return json.dumps(result, ensure_ascii = False)
 
 @app.route('/deleteProcess', methods=["POST"])
@@ -71,4 +88,4 @@ if __name__ == '__main__':
     # dbase = shelve.open("mydbase")
     # dbase['anchorList'] = ['腐团儿', 'Minana呀', '苏恩Olivia', 'Chance喵',  '张琪格', 'Sun佐伊',  '小a懿', '秀秀呢']
     # dbase.close()
-    app.run(host='192.168.31.40', port=18888)
+    app.run(host='127.0.0.1', port=18888)

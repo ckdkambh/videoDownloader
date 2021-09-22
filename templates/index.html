@@ -49,16 +49,36 @@
                 }, (data) => { alert("启动成功"); }
                 );
             }
+            function renderSize(value){
+                if(null==value||value==''){
+                    return "0 Bytes";
+                }
+                var unitArr = new Array("Bytes","KB","MB","GB","TB","PB","EB","ZB","YB");
+                var index=0;
+                var srcsize = parseFloat(value);
+                index=Math.floor(Math.log(srcsize)/Math.log(1024));
+                var size =srcsize/Math.pow(1024,index);
+                size=size.toFixed(2);//保留的小数位数
+                return size+unitArr[index];
+            }
             function fresh() {
                 $.get("/watch",
                     (data) => {
                         console.log(data);
+                        $("#freshTime").html(Date());
                         var tbody = $("#watchBody")
                         tbody.empty();
                         JSON.parse(data).forEach(function(value){
                             var tr = $("<tr></tr>");
                             tr.append($("<td>" + value['name'] + "</td>"));
-                            tr.append($("<td>" + value['state'] + "</td>"));
+                            if (value['state']) {
+                                tr.append($("<td>" + value['state'] + "</td>"));
+                            } else {
+                                tr.append($("<td style=\"background-color:red\">" + value['state'] + "</td>"));
+                            }
+                            tr.append($("<td>" + renderSize(value['totalSize']) + "</td>"));
+                            tr.append($("<td>" + value['totalFileNum'] + "</td>"));
+                            tr.append($("<td>" + renderSize(value['currentSize']) + "</td>"));
                             tr.append($('<td> <button onclick="deleteProcess(\'' + value['name'] +'\')" class="layui-btn">停止</button></td>'));
                             tr.appendTo(tbody);
                         });
@@ -110,7 +130,8 @@
             <fieldset class="layui-elem-field layui-field-title" style="margin-top: 50px;">
                 <legend>状态监控</legend>
             </fieldset>
-            <button id="fresh" onclick="fresh()" class="layui-btn">刷新</button>
+            <p><button id="fresh" onclick="fresh()" class="layui-btn">刷新</button></p>
+            <p><label class="layui-form-label" id="freshTime" style="width: 400px;"></label></p>
             <table class="layui-table">
                 <colgroup>
                   <col width="150">
@@ -120,7 +141,10 @@
                 <thead>
                   <tr>
                     <th>名称</th>
-                    <th>状态</th>
+                    <th>进程状态</th>
+                    <th>写入文件大小</th>
+                    <th>写入文件个数</th>
+                    <th>缓冲区大小</th>
                     <th>操作</th>
                   </tr>
                 </thead>

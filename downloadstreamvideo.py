@@ -2,6 +2,7 @@ import requests
 from datetime import datetime
 import time
 import sys, getopt,os
+from multiprocessing import Queue
 
 maxSize = 100*1024000
 maxConnectTry = 30
@@ -72,10 +73,13 @@ def get_next_num_link(link):
     j=link.rfind('.')
     return link[:i+1]+next_num[2:]+link[j:]
     
-def downloadVideo(name, url):
+def downloadVideo(name, url, queue):
     count = 0
     connectTryCount = 0
     last_work_time = time.time()
+
+    totalSize = 0
+    totalFileNum = 0
     
     is_dispersed = get_is_dispersed(url)
     if is_dispersed:
@@ -112,12 +116,14 @@ def downloadVideo(name, url):
                     if count < maxSize and chunk:
                         pdf.write(chunk)
                         count = count + chunk.__sizeof__()
+                        updateQueue(queue, totalSize, totalFileNum, count)
                     else:
                         break
             except OSError as e:
                 print('link break close current file, wait for link resume')
                 time.sleep(3)
                 continue
+
         if os.path.exists(fileName) and get_FileSize(fileName) < 800:
             connectTryCount = connectTryCount + 1
             print('file:%s too small(%dKB), delete!'%(fileName, get_FileSize(fileName)))
@@ -128,7 +134,18 @@ def downloadVideo(name, url):
                 continue
         else:
             connectTryCount = 0
+            totalFileNum = totalFileNum + 1
+            totalSize = totalSize + os.path.getsize(fileName)
+            updateQueue(queue, totalSize, totalFileNum, 0)
     print('complete')
+
+def updateQueue(queue, totalSize, totalFileNum, currentSize):
+    try:
+        queue.get_nowait()
+    except:
+        pass
+    queue.put({ "totalSize" : totalSize, 'totalFileNum' : totalFileNum, "currentSize" : currentSize})
+
 
 if __name__=="__main__":
     downloadVideo(DirName, file_url)
