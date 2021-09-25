@@ -121,8 +121,6 @@ def downloadVideo(name, url, queue):
                         break
             except OSError as e:
                 print('link break close current file, wait for link resume')
-                time.sleep(3)
-                continue
 
         if os.path.exists(fileName) and get_FileSize(fileName) < 800:
             connectTryCount = connectTryCount + 1
@@ -144,7 +142,10 @@ def updateQueue(queue, totalSize, totalFileNum, currentSize):
         queue.get_nowait()
     except:
         pass
-    queue.put({ "totalSize" : totalSize, 'totalFileNum' : totalFileNum, "currentSize" : currentSize})
+    try:
+        queue.put_nowait({ "totalSize" : totalSize, 'totalFileNum' : totalFileNum, "currentSize" : currentSize})
+    except:
+        pass
 
 
 if __name__=="__main__":
